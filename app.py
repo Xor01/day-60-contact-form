@@ -3,6 +3,7 @@ import requests
 import smtplib
 import dotenv
 import ssl
+from os import getenv
 # USE YOUR OWN nPoint LINK! ADD AN IMAGE URL FOR YOUR POST. 👇
 posts = requests.get("https://api.npoint.io/c790b4d5cab58020d391").json()
 
@@ -12,6 +13,7 @@ app = Flask(__name__)
 @app.route('/')
 @app.route('/index.html')
 def get_all_posts():
+    send_email()
     return render_template('index.html', all_posts=posts)
 
 
@@ -40,20 +42,20 @@ def show_post(index):
 
 
 def send_email():
+    server = None
     try:
         context = ssl.create_default_context()
-        server = smtplib.SMTP("smtp_server", 11)
-        server.ehlo()  # Can be omitted
-        server.starttls(context=context)  # Secure the connection
-        server.login("sender_email", "password")
-        # TODO: Send email here
+        server = smtplib.SMTP(getenv('SERVER'), int(getenv('PORT')))
+        server.ehlo()
+        server.starttls(context=context)
+        server.ehlo()
+        server.login(getenv('EMAIL'), getenv('PASSWORD'))
+        server.quit()
     except Exception as e:
-        # Print any error messages to stdout
         print(e)
-    finally:
         server.quit()
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
     dotenv.load_dotenv()
+    app.run(debug=True, port=5001)
