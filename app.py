@@ -13,7 +13,6 @@ app = Flask(__name__)
 @app.route('/')
 @app.route('/index.html')
 def get_all_posts():
-    send_email()
     return render_template('index.html', all_posts=posts)
 
 
@@ -25,10 +24,13 @@ def about():
 @app.route("/contact", methods=['GET', 'POST'])
 def contact():
     if request.method == 'GET':
-        print('get')
         return render_template("contact.html", send=False)
     elif request.method == 'POST':
-        print('post')
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        message = request.form.get('message')
+        send_email(name, email, phone, message)
         return render_template('contact.html', send=True)
 
 
@@ -41,7 +43,7 @@ def show_post(index):
     return render_template("post.html", post=requested_post)
 
 
-def send_email():
+def send_email(name, email, phone, message):
     server = None
     try:
         context = ssl.create_default_context()
@@ -50,6 +52,8 @@ def send_email():
         server.starttls(context=context)
         server.ehlo()
         server.login(getenv('EMAIL'), getenv('PASSWORD'))
+        email_content = f"Subject: FeedBack sent from: {name} with email: {email}\n\nPhone: {phone}\nMessage: {message}"
+        server.sendmail(from_addr=getenv('EMAIL'), to_addrs=getenv('EMAIL'), msg=email_content)
         server.quit()
     except Exception as e:
         print(e)
